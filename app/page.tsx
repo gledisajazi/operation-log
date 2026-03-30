@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OperationForm from "@/components/OperationForm";
 import LogoutButton from "@/components/LogoutButton";
+import TopTabs from "@/components/TopTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,6 @@ export default async function Home() {
     redirect("/login");
   }
 
-  // fetch dropdown data
   const { data: places } = await supabase
     .from("places")
     .select("*")
@@ -68,11 +67,9 @@ export default async function Home() {
     .eq("is_active", true)
     .order("sort_order");
 
-  // month ranges
   const current = getMonthRange(0);
   const last = getMonthRange(-1);
 
-  // fetch operations
   const { data: currentOps } = await supabase
     .from("operations")
     .select("*")
@@ -89,83 +86,91 @@ export default async function Home() {
   const lastGrouped = groupOperations(lastOps || [], places || [], types || []);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-4">
+    <main className="min-h-screen bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-2xl space-y-4">
-
-        {/* HEADER */}
-        <header className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
-          <h1 className="text-lg font-bold">Operacion Log</h1>
-
-          <div className="flex gap-2">
-            <Link href="/records" className="text-sm underline">
-              Regjistrimet
-            </Link>
-            <Link href="/admin" className="text-sm underline">
-              Admin
-            </Link>
+        <header className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-slate-900">
+                Operation Log
+              </h1>
+              <p className="text-sm text-slate-600">
+                Minimal mobile dashboard
+              </p>
+            </div>
             <LogoutButton />
           </div>
+
+          <TopTabs active="add" />
         </header>
 
-        {/* FORM */}
-        <OperationForm
-          places={places || []}
-          operationTypes={types || []}
-        />
+        <OperationForm places={places || []} operationTypes={types || []} />
 
-        {/* SUMMARY */}
-        <section className="rounded-2xl bg-white p-4 shadow-sm space-y-6">
-
-          {/* CURRENT MONTH */}
+        <section className="space-y-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div>
-            <h2 className="font-semibold mb-2">Muaji aktual</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">
+              Muaji aktual
+            </h2>
 
             {Object.keys(currentGrouped).length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-600">
                 Nuk ka operacione këtë muaj
               </p>
             ) : (
-              Object.entries(currentGrouped).map(([place, ops]) => (
-                <div key={place} className="mb-3">
-                  <p className="font-medium">{place}</p>
-                  <ul className="text-sm ml-4">
-                    {Object.entries(ops).map(([type, count]) => (
-                      <li key={type}>
-                        {type}: {count}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
+              <div className="space-y-3">
+                {Object.entries(currentGrouped).map(([place, ops]) => (
+                  <div key={place} className="rounded-2xl bg-slate-50 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">
+                      {place}
+                    </p>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {Object.entries(ops).map(([type, count]) => (
+                        <li key={type} className="flex items-center justify-between gap-3">
+                          <span>{type}</span>
+                          <span className="font-semibold text-slate-900">
+                            {count}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* LAST MONTH */}
           <div>
-            <h2 className="font-semibold mb-2">Muaji i kaluar</h2>
+            <h2 className="mb-3 text-base font-semibold text-slate-900">
+              Muaji i kaluar
+            </h2>
 
             {Object.keys(lastGrouped).length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-600">
                 Nuk ka operacione muajin e kaluar
               </p>
             ) : (
-              Object.entries(lastGrouped).map(([place, ops]) => (
-                <div key={place} className="mb-3">
-                  <p className="font-medium">{place}</p>
-                  <ul className="text-sm ml-4">
-                    {Object.entries(ops).map(([type, count]) => (
-                      <li key={type}>
-                        {type}: {count}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
+              <div className="space-y-3">
+                {Object.entries(lastGrouped).map(([place, ops]) => (
+                  <div key={place} className="rounded-2xl bg-slate-50 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">
+                      {place}
+                    </p>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {Object.entries(ops).map(([type, count]) => (
+                        <li key={type} className="flex items-center justify-between gap-3">
+                          <span>{type}</span>
+                          <span className="font-semibold text-slate-900">
+                            {count}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-
         </section>
-
       </div>
     </main>
   );

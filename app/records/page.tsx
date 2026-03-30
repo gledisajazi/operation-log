@@ -2,13 +2,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
+import TopTabs from "@/components/TopTabs";
+import DeleteButton from "@/components/DeleteButton";
 
 export const dynamic = "force-dynamic";
+
+type SearchParams = {
+  date?: string;
+  placeId?: string;
+  typeId?: string;
+  q?: string;
+};
+
+function getValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value ?? "";
+}
 
 export default async function RecordsPage({
   searchParams,
 }: {
-  searchParams?: any;
+  searchParams?: Promise<SearchParams>;
 }) {
   const supabase = await createClient();
 
@@ -18,28 +31,30 @@ export default async function RecordsPage({
 
   if (!user) redirect("/login");
 
-  const date = searchParams?.date || "";
-  const placeId = searchParams?.placeId || "";
-  const typeId = searchParams?.typeId || "";
-  const q = (searchParams?.q || "").toLowerCase();
+  const params = searchParams ? await searchParams : undefined;
+
+  const date = getValue(params?.date);
+  const placeId = getValue(params?.placeId);
+  const typeId = getValue(params?.typeId);
+  const q = getValue(params?.q).toLowerCase().trim();
 
   const { data: places } = await supabase
     .from("places")
-    .select("*")
+    .select("id, name, sort_order, is_active")
     .eq("is_active", true)
     .order("sort_order");
 
   const { data: types } = await supabase
     .from("operation_types")
-    .select("*")
+    .select("id, name, sort_order, is_active")
     .eq("is_active", true)
     .order("sort_order");
 
   let query = supabase
     .from("operations")
-    .select("*")
+    .select("id, operation_date, place_id, operation_type_id, patient_name, notes, created_at")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
   if (date) query = query.eq("operation_date", date);
   if (placeId) query = query.eq("place_id", placeId);
@@ -59,38 +74,39 @@ export default async function RecordsPage({
   const typeMap = new Map((types || []).map((t) => [t.id, t.name]));
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-4">
+    <main className="min-h-screen bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-3xl space-y-4">
-
-        {/* HEADER */}
-        <header className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm">
-          <h1 className="font-bold text-lg">Regjistrimet</h1>
-
-          <div className="flex gap-2">
-            <Link href="/" className="text-sm underline">
-              Home
-            </Link>
+        <header className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-slate-900">
+                Shih operacionet
+              </h1>
+              <p className="text-sm text-slate-600">
+                Kërko, filtro dhe edito
+              </p>
+            </div>
             <LogoutButton />
           </div>
+
+          <TopTabs active="records" />
         </header>
 
-        {/* FILTERS */}
-        <form className="bg-white p-4 rounded-2xl shadow-sm space-y-3">
-
+        <form className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
           <input
             type="date"
             name="date"
             defaultValue={date}
-            className="w-full h-12 border rounded-xl px-3"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-slate-900"
           />
 
           <select
             name="placeId"
             defaultValue={placeId}
-            className="w-full h-12 border rounded-xl px-3"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-slate-900"
           >
             <option value="">Gjithë vendet</option>
-            {places?.map((p) => (
+            {(places || []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
@@ -100,10 +116,10 @@ export default async function RecordsPage({
           <select
             name="typeId"
             defaultValue={typeId}
-            className="w-full h-12 border rounded-xl px-3"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-slate-900"
           >
             <option value="">Gjithë operacionet</option>
-            {types?.map((t) => (
+            {(types || []).map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
               </option>
@@ -115,51 +131,55 @@ export default async function RecordsPage({
             name="q"
             defaultValue={q}
             placeholder="Search pacient / shënime"
-            className="w-full h-12 border rounded-xl px-3"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900"
           />
 
-          <button className="w-full h-12 bg-black text-white rounded-xl">
+          <button className="h-12 w-full rounded-2xl bg-slate-900 px-4 text-base font-semibold text-white transition hover:bg-slate-800">
             Kërko
           </button>
         </form>
 
-        {/* LIST */}
         <div className="space-y-3">
           {filtered.length === 0 ? (
-            <p className="text-center text-sm text-gray-500">
+            <p className="py-10 text-center text-sm text-slate-600">
               Nuk ka rezultate
             </p>
           ) : (
             filtered.map((op) => (
               <div
                 key={op.id}
-                className="bg-white p-4 rounded-2xl shadow-sm"
+                className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                <p className="font-medium">
+                <p className="font-semibold text-slate-900">
                   {op.patient_name || "Pa emër"}
                 </p>
 
-                <p className="text-sm text-gray-500">
+                <p className="mt-1 text-sm text-slate-600">
                   {op.operation_date} •{" "}
-                  {placeMap.get(op.place_id)} •{" "}
-                  {typeMap.get(op.operation_type_id)}
+                  {placeMap.get(op.place_id) || "Unknown"} •{" "}
+                  {typeMap.get(op.operation_type_id) || "Unknown"}
                 </p>
 
-                {op.notes && (
-                  <p className="text-sm mt-1">{op.notes}</p>
-                )}
+                {op.notes ? (
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {op.notes}
+                  </p>
+                ) : null}
 
-                <Link
-                  href={`/operations/${op.id}/edit`}
-                  className="text-sm underline mt-2 inline-block"
-                >
-                  Edit
-                </Link>
+                <div className="mt-4 flex items-center gap-4">
+                  <Link
+                    href={`/operations/${op.id}/edit`}
+                    className="text-sm font-medium text-slate-900 underline underline-offset-4"
+                  >
+                    Edit
+                  </Link>
+
+                  <DeleteButton id={op.id} />
+                </div>
               </div>
             ))
           )}
         </div>
-
       </div>
     </main>
   );

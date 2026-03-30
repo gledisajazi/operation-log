@@ -43,17 +43,14 @@ export default function OperationForm({
 }: Props) {
   const router = useRouter();
 
-  const defaultDate = initialOperation?.operation_date ?? getLocalToday();
-  const defaultPlace = initialOperation?.place_id ?? places[0]?.id ?? "";
-  const defaultType =
-    initialOperation?.operation_type_id ?? operationTypes[0]?.id ?? "";
+  const initialDate = initialOperation?.operation_date ?? getLocalToday();
+  const initialPlace = initialOperation?.place_id ?? places[0]?.id ?? "";
+  const initialType = initialOperation?.operation_type_id ?? operationTypes[0]?.id ?? "";
 
-  const [operationDate, setOperationDate] = useState(defaultDate);
-  const [placeId, setPlaceId] = useState(defaultPlace);
-  const [operationTypeId, setOperationTypeId] = useState(defaultType);
-  const [patientName, setPatientName] = useState(
-    initialOperation?.patient_name ?? ""
-  );
+  const [operationDate, setOperationDate] = useState(initialDate);
+  const [placeId, setPlaceId] = useState(initialPlace);
+  const [operationTypeId, setOperationTypeId] = useState(initialType);
+  const [patientName, setPatientName] = useState(initialOperation?.patient_name ?? "");
   const [notes, setNotes] = useState(initialOperation?.notes ?? "");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,7 +88,7 @@ export default function OperationForm({
     }
 
     if (mode === "edit") {
-      router.push("/");
+      router.push("/records");
       router.refresh();
       return;
     }
@@ -107,16 +104,13 @@ export default function OperationForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mx-auto mt-6 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
-    >
+    <form className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" onSubmit={handleSubmit}>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
           {mode === "edit" ? "Edito operacionin" : "Shto operacion"}
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Mobile-first, pa gabime me datën.
+        <p className="mt-1 text-sm text-slate-600">
+          Forma është e optimizuar për iPhone dhe mobile.
         </p>
       </div>
 
@@ -129,7 +123,7 @@ export default function OperationForm({
             type="date"
             value={operationDate}
             onChange={(e) => setOperationDate(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-base outline-none focus:border-slate-900"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900"
           />
         </div>
 
@@ -153,9 +147,9 @@ export default function OperationForm({
                   value={place.id}
                   checked={placeId === place.id}
                   onChange={() => setPlaceId(place.id)}
-                  className="h-4 w-4"
+                  className="h-4 w-4 accent-slate-900"
                 />
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-slate-900">
                   {place.name}
                 </span>
               </label>
@@ -170,7 +164,7 @@ export default function OperationForm({
           <select
             value={operationTypeId}
             onChange={(e) => setOperationTypeId(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-base outline-none focus:border-slate-900"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none focus:border-slate-900"
           >
             {operationTypes.map((type) => (
               <option key={type.id} value={type.id}>
@@ -188,7 +182,7 @@ export default function OperationForm({
             type="text"
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-base outline-none focus:border-slate-900"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900"
             placeholder="Mund të lihet bosh"
           />
         </div>
@@ -200,7 +194,7 @@ export default function OperationForm({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="min-h-32 w-full rounded-2xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-slate-900"
+            className="min-h-32 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900"
             placeholder="Shkruaj shënime shtesë..."
           />
         </div>
@@ -208,12 +202,18 @@ export default function OperationForm({
         <button
           type="submit"
           disabled={loading}
-          className="h-12 w-full rounded-2xl bg-slate-900 px-4 text-base font-semibold text-white disabled:opacity-60"
+          className="h-12 w-full rounded-2xl bg-slate-900 px-4 text-base font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
         >
-          {loading ? "Duke ruajtur..." : mode === "edit" ? "Ruaj ndryshimet" : "Ruaj operacionin"}
+          {loading
+            ? "Duke ruajtur..."
+            : mode === "edit"
+              ? "Ruaj ndryshimet"
+              : "Ruaj operacionin"}
         </button>
 
-        {message ? <p className="text-sm text-slate-600">{message}</p> : null}
+        {message ? (
+          <p className="text-sm font-medium text-slate-700">{message}</p>
+        ) : null}
       </div>
     </form>
   );
